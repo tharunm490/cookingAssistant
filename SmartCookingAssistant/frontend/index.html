@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Cooking Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">🍳</div>
+        <div class="brand-copy">
+          <h1>Smart Cooking Assistant</h1>
+          <p>Image to ingredients to recipe to voice</p>
+        </div>
+      </div>
+
+      <div class="sidebar-card panel">
+        <p class="header-subtitle" style="margin-top:0;">This interface keeps the bold neon-bento structure from the original concept, but makes it cleaner and more practical for the full workflow.</p>
+        <div class="history" style="margin-top:18px;">
+          <div class="history-item">
+            <strong>Pantry lunch bowl</strong>
+            <span>Generated recipe with rice, tomato, onion, and spices</span>
+          </div>
+          <div class="history-item">
+            <strong>High protein dinner</strong>
+            <span>Chicken, egg, and vegetable stir-fry</span>
+          </div>
+          <div class="history-item">
+            <strong>Cozy soup night</strong>
+            <span>Blended pantry ingredients into a warm meal</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h2 class="header-title">Turn pantry photos into a <span>complete recipe</span>.</h2>
+          <p class="header-subtitle">Upload multiple images, detect ingredients with CLIP, generate a structured recipe with measurements, and create a narrated MP3 for playback.</p>
+        </div>
+        <div class="pill-row">
+          <span class="pill active">CLIP detection</span>
+          <span class="pill active">Mistral recipe generation</span>
+          <span class="pill active">gTTS voice</span>
+        </div>
+      </div>
+
+      <section class="hero-grid">
+        <div class="panel upload-card">
+          <div class="upload-dropzone" id="dropzone">
+            <div>
+              <div style="font-size:3rem; margin-bottom:10px;">📸</div>
+              <h3 class="header-title" style="font-size:2rem; margin-bottom:8px;">Drop pantry photos here</h3>
+              <p class="header-subtitle" style="margin:0 auto;">You can upload multiple images. The app will combine the detected ingredients and build a recipe around them.</p>
+              <div style="margin-top:18px;">
+                <input id="file-input" type="file" accept="image/*" multiple hidden />
+                <label for="file-input" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:10px; cursor:pointer;">Choose images</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-grid" id="preview-grid"></div>
+
+          <div class="controls-grid">
+            <div class="field">
+              <label for="meal-type">Meal type</label>
+              <select id="meal-type">
+                <option>breakfast</option>
+                <option selected>lunch</option>
+                <option>dinner</option>
+                <option>snack</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="diet-type">Diet</label>
+              <select id="diet-type">
+                <option>balanced</option>
+                <option>vegetarian</option>
+                <option>vegan</option>
+                <option>high protein</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="spice-level">Spice level</label>
+              <select id="spice-level">
+                <option>mild</option>
+                <option selected>medium</option>
+                <option>hot</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="upload-actions">
+            <button class="btn btn-primary" id="detect-button">Detect ingredients</button>
+            <button class="btn btn-secondary" id="generate-button">Generate recipe</button>
+            <button class="btn btn-accent" id="voice-button">Generate voice</button>
+          </div>
+
+          <p class="status" id="status">Ready for images.</p>
+        </div>
+
+        <div class="panel">
+          <div class="bento">
+            <div class="sidebar-card panel" style="padding:18px;">
+              <p class="status" style="margin-top:0;">Detected ingredients</p>
+              <div class="ingredient-row" id="ingredient-list"></div>
+            </div>
+            <div class="sidebar-card panel" style="padding:18px;">
+              <p class="status" style="margin-top:0;">Nutrition snapshot</p>
+              <div class="stats-grid" id="nutrition-output"></div>
+            </div>
+          </div>
+
+          <div class="recipe-card" id="recipe-output" style="margin-top:16px;">
+            <p class="status">Generated recipe will appear here.</p>
+          </div>
+
+          <div class="audio-card" id="audio-output" style="margin-top:16px;">
+            <p class="status">Create voice narration after generating the recipe.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

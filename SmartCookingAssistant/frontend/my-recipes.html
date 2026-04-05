@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Recipes | Smart Cooking Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="simple-header">
+      <div>
+        <h1 class="simple-title">My Recipes</h1>
+        <p class="simple-subtitle">Saved recipes in clean readable format</p>
+      </div>
+      <a class="nav-btn" href="../agile_ui_1.html">Back to Dashboard</a>
+    </header>
+
+    <section class="card">
+      <h3 class="simple-title" style="font-size:1.5rem;">Recipe History</h3>
+      <p class="simple-subtitle">Click a recipe to view ingredients, steps, and nutrition.</p>
+      <div class="list" id="recipe-list">Loading...</div>
+    </section>
+  </div>
+
+  <dialog id="recipe-dialog" class="dialog">
+    <h3 id="dialog-title" class="simple-title" style="font-size:1.6rem;"></h3>
+    <div id="dialog-body"></div>
+    <div class="recipe-section" style="display:flex; justify-content:flex-end;">
+      <button class="nav-btn" onclick="document.getElementById('recipe-dialog').close()">Close</button>
+    </div>
+  </dialog>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const token = localStorage.getItem("sca_token");
+    if (!token) window.location.href = "login.html";
+
+    function renderRecipeDetails(item) {
+      const recipe = item.recipe_json || {};
+      const rows = recipe.ingredients_with_measurements || [];
+      const steps = recipe.steps || [];
+      const nutrition = item.nutrition || recipe.nutrition || {};
+
+      const ingredientsHtml = rows.length
+        ? rows.map((row) => `<li><strong>${row.measurement || ""}</strong> ${row.ingredient || ""}</li>`).join("")
+        : "<li>Ingredient details not available.</li>";
+
+      const stepsHtml = steps.length
+        ? steps.map((step) => `<li>${step}</li>`).join("")
+        : "<li>Step details not available.</li>";
+
+      return `
+        <div class="recipe-meta">
+          <span class="pill active">${recipe.cooking_time || "--"}</span>
+          <span class="pill active">${recipe.servings || "--"} servings</span>
+          <span class="pill active">${item.meal_type || "meal"}</span>
+        </div>
+        <div class="recipe-section">
+          <h4>Ingredients with measurements</h4>
+          <ul>${ingredientsHtml}</ul>
+        </div>
+        <div class="recipe-section">
+          <h4>Cooking steps</h4>
+          <ol>${stepsHtml}</ol>
+        </div>
+        <div class="recipe-section">
+          <h4>Nutrition</h4>
+          <ul>
+            <li>Calories: ${nutrition.calories || "--"}</li>
+            <li>Protein: ${nutrition.protein || "--"}</li>
+            <li>Carbs: ${nutrition.carbs || "--"}</li>
+            <li>Fat: ${nutrition.fat || "--"}</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    async function loadRecipes() {
+      const list = document.getElementById("recipe-list");
+      try {
+        const response = await fetch(`${API_BASE}/my-recipes`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.status === 401) {
+          localStorage.removeItem("sca_token");
+          localStorage.removeItem("sca_user");
+          window.location.href = "login.html";
+          return;
+        }
+
+        const data = await response.json();
+        const recipes = data.recipes || [];
+        if (!recipes.length) {
+          list.textContent = "No saved recipes yet.";
+          return;
+        }
+
+        list.innerHTML = "";
+        recipes.forEach((item) => {
+          const card = document.createElement("article");
+          card.className = "item";
+          card.innerHTML = `
+            <strong>${item.recipe_name || "Recipe"}</strong>
+            <div class="meta">${item.meal_type || "meal"} • ${item.created_at || ""}</div>
+          `;
+          card.addEventListener("click", () => {
+            document.getElementById("dialog-title").textContent = item.recipe_name || "Recipe";
+            document.getElementById("dialog-body").innerHTML = renderRecipeDetails(item);
+            document.getElementById("recipe-dialog").showModal();
+          });
+          list.appendChild(card);
+        });
+      } catch {
+        list.textContent = "Unable to load recipes.";
+      }
+    }
+
+    loadRecipes();
+  </script>
+</body>
+</html>

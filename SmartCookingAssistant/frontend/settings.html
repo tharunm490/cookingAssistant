@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings | Smart Cooking Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="simple-header">
+      <div>
+        <h1 class="simple-title">Settings</h1>
+        <p class="simple-subtitle">Account security options</p>
+      </div>
+      <a class="nav-btn" href="../agile_ui_1.html">Back to Dashboard</a>
+    </header>
+
+    <section class="card stack">
+      <h3 class="simple-title" style="font-size:1.5rem;">Update Password</h3>
+      <div class="two-col">
+        <div class="card" style="padding:16px; box-shadow:none;">
+          <div class="field-inline">
+            <label>Current Password</label>
+            <input id="current-password" type="password" />
+          </div>
+          <div class="field-inline">
+            <label>New Password</label>
+            <input id="new-password" type="password" />
+          </div>
+          <div class="field-inline">
+            <label>Confirm Password</label>
+            <input id="confirm-password" type="password" />
+          </div>
+          <button class="btn btn-primary" id="update-password-btn" type="button" style="margin-top:12px;">Update Password</button>
+          <div class="status" id="status"></div>
+        </div>
+        <div class="card" style="padding:16px; box-shadow:none;">
+          <div class="item">Password updates are validated against your current password.</div>
+          <div class="item">Passwords are stored using bcrypt hashing.</div>
+          <div class="item">Expired tokens redirect you to the login page.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const token = localStorage.getItem("sca_token");
+    if (!token) window.location.href = "login.html";
+    const statusEl = document.getElementById("status");
+    function setStatus(msg){ statusEl.textContent = msg; }
+
+    document.getElementById("update-password-btn").addEventListener("click", async ()=>{
+      const currentPassword = document.getElementById("current-password").value.trim();
+      const newPassword = document.getElementById("new-password").value.trim();
+      const confirmPassword = document.getElementById("confirm-password").value.trim();
+      if(!currentPassword || !newPassword || !confirmPassword){ setStatus("All fields are required."); return; }
+      if(newPassword !== confirmPassword){ setStatus("New password and confirm password must match."); return; }
+      try{
+        const response = await fetch(`${API_BASE}/update-password`,{
+          method:"PUT",
+          headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+          body:JSON.stringify({current_password:currentPassword,new_password:newPassword})
+        });
+        const data = await response.json();
+        if(!response.ok){ throw new Error(data.detail || "Failed to update password."); }
+        setStatus("Password updated successfully.");
+      }catch(error){
+        setStatus(error.message || "Unable to update password.");
+      }
+    });
+  </script>
+</body>
+</html>

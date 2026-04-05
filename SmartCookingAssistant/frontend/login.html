@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Smart Cooking Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="card auth-card">
+      <h1 class="simple-title" style="margin:0;">Welcome Back</h1>
+      <p class="simple-subtitle">Sign in with the same Smart Cooking Assistant theme.</p>
+
+      <div class="field-inline" style="margin-top:12px;">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="you@example.com" />
+      </div>
+
+      <div class="field-inline">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="********" />
+      </div>
+
+      <button class="btn btn-primary" id="login-btn" type="button" style="margin-top:12px;">Login</button>
+      <div class="status" id="status"></div>
+      <div class="simple-subtitle" style="margin-top:10px;">New here? <a href="signup.html">Create an account</a></div>
+      <div class="simple-subtitle"><a href="../agile_ui_1.html">Back to dashboard</a></div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const statusEl = document.getElementById("status");
+    const loginBtn = document.getElementById("login-btn");
+
+    function setStatus(message) { statusEl.textContent = message; }
+
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) { setStatus("Email and password are required."); return; }
+      loginBtn.disabled = true; loginBtn.textContent = "Logging in..."; setStatus("Authenticating...");
+      try {
+        const response = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Login failed.");
+        localStorage.setItem("sca_token", data.access_token);
+        localStorage.setItem("sca_user", JSON.stringify(data.user || {}));
+        window.location.href = "../agile_ui_1.html";
+      } catch (error) {
+        setStatus(error.message || "Unable to login.");
+      } finally {
+        loginBtn.disabled = false; loginBtn.textContent = "Login";
+      }
+    }
+
+    loginBtn.addEventListener("click", login);
+  </script>
+</body>
+</html>

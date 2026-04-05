@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signup | Smart Cooking Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="card auth-card">
+      <h1 class="simple-title" style="margin:0;">Create Account</h1>
+      <p class="simple-subtitle">Signup page in the same agile_ui_1 style.</p>
+
+      <div class="field-inline" style="margin-top:12px;">
+        <label for="name">Name</label>
+        <input id="name" type="text" placeholder="Your name" />
+      </div>
+
+      <div class="field-inline">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="you@example.com" />
+      </div>
+
+      <div class="field-inline">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="********" />
+      </div>
+
+      <button class="btn btn-primary" id="signup-btn" type="button" style="margin-top:12px;">Signup</button>
+      <div class="status" id="status"></div>
+      <div class="simple-subtitle" style="margin-top:10px;">Already have an account? <a href="login.html">Login</a></div>
+      <div class="simple-subtitle"><a href="../agile_ui_1.html">Back to dashboard</a></div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const statusEl = document.getElementById("status");
+    const signupBtn = document.getElementById("signup-btn");
+    function setStatus(message) { statusEl.textContent = message; }
+
+    async function signup() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!name || !email || !password) { setStatus("Name, email, and password are required."); return; }
+      signupBtn.disabled = true; signupBtn.textContent = "Creating account..."; setStatus("Submitting...");
+      try {
+        const response = await fetch(`${API_BASE}/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Signup failed.");
+        setStatus("Signup successful. Redirecting to login...");
+        setTimeout(() => window.location.href = "login.html", 900);
+      } catch (error) {
+        setStatus(error.message || "Unable to signup.");
+      } finally {
+        signupBtn.disabled = false; signupBtn.textContent = "Signup";
+      }
+    }
+
+    signupBtn.addEventListener("click", signup);
+  </script>
+</body>
+</html>

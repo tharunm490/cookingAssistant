@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+.venv/
+agile_versiion1/
+
+# Local secrets
+.env
+
+# Generated audio artifacts
+generated_audio/
+
+# Uploaded image artifacts
+uploaded_images/

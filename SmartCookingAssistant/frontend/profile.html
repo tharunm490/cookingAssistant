@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile | Smart Cooking Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="simple-header">
+      <div>
+        <h1 class="simple-title">Profile</h1>
+        <p class="simple-subtitle">Account information and activity</p>
+      </div>
+      <a class="nav-btn" href="../agile_ui_1.html">Back to Dashboard</a>
+    </header>
+
+    <div class="two-col">
+      <aside class="card">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="avatar" style="width:56px;height:56px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--genz-pink),var(--genz-blue));color:#121212;font-weight:700;">U</div>
+          <div>
+            <h3 id="name" class="simple-title" style="font-size:1.2rem; margin:0;">Loading...</h3>
+            <p id="email" class="simple-subtitle"></p>
+          </div>
+        </div>
+        <div class="three-col" style="margin-top:12px;">
+          <div class="item"><strong id="recipes-count">-</strong><div class="meta">Recipes</div></div>
+          <div class="item"><strong id="login-count">-</strong><div class="meta">Sessions</div></div>
+          <div class="item"><strong id="member-since">-</strong><div class="meta">Status</div></div>
+        </div>
+      </aside>
+
+      <section class="card">
+        <h3 class="simple-title" style="font-size:1.5rem;">Profile Details</h3>
+        <div id="profile-card" class="list" style="margin-top:10px;">Loading profile...</div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const token = localStorage.getItem("sca_token");
+    if (!token) window.location.href = "login.html";
+
+    async function loadProfile(){
+      const card = document.getElementById("profile-card");
+      try{
+        const response = await fetch(`${API_BASE}/me`,{headers:{Authorization:`Bearer ${token}`}});
+        if(response.status===401){localStorage.removeItem("sca_token");localStorage.removeItem("sca_user");window.location.href="login.html";return;}
+        const data = await response.json();
+        const user = data.user || {};
+        document.getElementById("avatar").textContent = (user.name || user.email || "U").trim()[0]?.toUpperCase() || "U";
+        document.getElementById("name").textContent = user.name || "-";
+        document.getElementById("email").textContent = user.email || "-";
+        document.getElementById("recipes-count").textContent = "Saved";
+        document.getElementById("login-count").textContent = "Active";
+        document.getElementById("member-since").textContent = "You";
+        card.innerHTML = `
+          <div class="item"><strong>User ID</strong><div class="meta">${user.user_id || "-"}</div></div>
+          <div class="item"><strong>Name</strong><div class="meta">${user.name || "-"}</div></div>
+          <div class="item"><strong>Email</strong><div class="meta">${user.email || "-"}</div></div>
+        `;
+      }catch{
+        card.textContent = "Unable to load profile.";
+      }
+    }
+    loadProfile();
+  </script>
+</body>
+</html>

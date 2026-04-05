@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+transformers
+torch
+pillow
+huggingface_hub
+gtts
+aiofiles
+mysql-connector-python
+bcrypt
+python-jose
