@@ -23,6 +23,7 @@ from .config import PROJECT_DIR, settings
 from .db import get_db_connection
 from .recipe_generator import RecipeGenerator, RecipePreferences, parse_text_hint_to_ingredients
 from .tts_service import TTSService
+from .translation_service import translate_recipe
 from .utils import normalize_text_list
 
 app = FastAPI(title="Smart Cooking Assistant", version="1.0.0")
@@ -260,16 +261,19 @@ async def detect_ingredients(images: list[UploadFile] = File(...)) -> JSONRespon
 
     detector = _get_or_create_detector()
     detected = detector.detect_from_images(pil_images)
+    max_by_image_count = min(len(pil_images), settings.max_detected_ingredients)
+    detected = detected[:max_by_image_count]
     return JSONResponse(
         {
             "ingredients": detected,
             "top_ingredients": [item["ingredient"] for item in detected],
+            "image_count": len(pil_images),
         }
     )
 
 
 @app.post("/generate-recipe")
-def generate_recipe(request: RecipeRequest) -> JSONResponse:
+def generate_recipe(request: RecipeRequest, user: dict[str, Any] = Depends(get_current_user)) -> JSONResponse:
     flattened_ingredients: list[str] = []
     for group in ingredients_data.values():
         flattened_ingredients.extend(group)
@@ -290,7 +294,13 @@ def generate_recipe(request: RecipeRequest) -> JSONResponse:
         language=request.language,
         user_text=request.user_text,
     )
+
+    # Keep the dependency explicit for route-level auth enforcement.
+    _ = user
     recipe = recipe_generator.generate(all_ingredients, preferences)
+
+    recipe = translate_recipe(recipe, request.language)
+
     return JSONResponse(recipe)
 
 

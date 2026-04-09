@@ -463,6 +463,21 @@
         return headers;
     }
 
+    function handleUnauthorized(actionName) {
+        setStatus(`Please login or signup first to ${actionName}.`);
+        const goToLogin = window.confirm(`Please login or signup first to ${actionName}.\n\nPress OK for Login or Cancel for Signup.`);
+        window.location.href = goToLogin ? "frontend/login.html" : "frontend/signup.html";
+    }
+
+    function ensureAuthenticated(actionName) {
+        const token = localStorage.getItem("sca_token");
+        if (!token) {
+            handleUnauthorized(actionName);
+            return false;
+        }
+        return true;
+    }
+
     async function refreshCurrentUser() {
         if (!AUTH_TOKEN) {
             renderHeaderAuth();
@@ -542,10 +557,12 @@
             .join("");
         const extraHtml = (recipe.extra_ingredients || []).map((item) => `<li>${item}</li>`).join("");
         const stepsHtml = (recipe.steps || []).map((step) => `<li>${step}</li>`).join("");
+        const source = recipe.generation_source || "unknown";
 
         dom.recipeOutput.innerHTML = `
             <h4 class="text-lg font-black">${recipe.recipe_name || "Recipe"}</h4>
             <p class="text-sm text-white/60">${recipe.cooking_time || "--"} • ${recipe.servings || "--"} servings • ${recipe.meal_type || "--"}</p>
+            <p class="text-xs mt-1 text-genz-teal font-bold">Source: ${source}</p>
             <h5 class="font-bold mt-3">Ingredients</h5>
             <ul class="list-disc ml-5 space-y-1 text-sm">${ingredientsHtml}</ul>
             <h5 class="font-bold mt-3">Extra ingredients added</h5>
@@ -674,7 +691,8 @@
                 // Detection should still succeed even if history persistence fails.
             }
 
-            setStatus(`Detected ${state.detectedIngredients.length} ingredient(s).`);
+            const imageCount = Number(data.image_count || state.files.length || 0);
+            setStatus(`Detected ${state.detectedIngredients.length} ingredient(s) from ${imageCount} image(s).`);
         } finally {
             state.isDetecting = false;
             setButtonBusy(dom.detectButton, false, "Detecting...", "Detect Ingredients");
@@ -685,6 +703,10 @@
         if (state.isGeneratingRecipe) {
             return;
         }
+        if (!ensureAuthenticated("generate a recipe")) {
+            return;
+        }
+
         const payload = {
             ingredients: state.detectedIngredients.map((item) => item.ingredient),
             meal_type: dom.mealType.value,
@@ -711,6 +733,15 @@
                 headers: authHeaders(true),
                 body: JSON.stringify(payload)
             });
+            if (response.status === 401) {
+                localStorage.removeItem("sca_token");
+                localStorage.removeItem("sca_user");
+                AUTH_TOKEN = null;
+                CURRENT_USER = {};
+                renderHeaderAuth();
+                handleUnauthorized("generate a recipe");
+                return;
+            }
             if (!response.ok) {
                 throw new Error(await readErrorDetail(response, "Recipe generation failed."));
             }

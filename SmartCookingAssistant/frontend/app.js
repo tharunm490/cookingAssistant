@@ -28,6 +28,16 @@ function setStatus(message) {
   dom.status.textContent = message;
 }
 
+function promptLoginOrSignup(actionName) {
+  setStatus(`Please login or signup first to ${actionName}.`);
+  const goToLogin = window.confirm(`Please login or signup first to ${actionName}.\n\nPress OK for Login or Cancel for Signup.`);
+  window.location.href = goToLogin ? "login.html" : "signup.html";
+}
+
+function getAuthToken() {
+  return localStorage.getItem("sca_token");
+}
+
 function renderPreviews() {
   dom.previewGrid.innerHTML = "";
   if (!state.files.length) {
@@ -140,11 +150,18 @@ async function detectIngredients() {
 }
 
 async function generateRecipe() {
+  const token = getAuthToken();
+  if (!token) {
+    promptLoginOrSignup("generate a recipe");
+    return;
+  }
+
   const ingredients = state.detectedIngredients.map((item) => item.ingredient);
   const response = await fetch(`${API_BASE}/generate-recipe`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       ingredients,
@@ -155,6 +172,12 @@ async function generateRecipe() {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("sca_token");
+      localStorage.removeItem("sca_user");
+      promptLoginOrSignup("generate a recipe");
+      return;
+    }
     throw new Error("Recipe generation failed.");
   }
 

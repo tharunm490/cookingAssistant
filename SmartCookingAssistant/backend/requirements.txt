@@ -4,6 +4,7 @@ python-multipart
 pydantic
 transformers
 torch
+sentencepiece
 pillow
 huggingface_hub
 gtts
@@ -11,3 +12,4 @@ aiofiles
 mysql-connector-python
 bcrypt
 python-jose
+deep-translator

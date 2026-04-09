@@ -4,6 +4,7 @@ Smart Cooking Assistant is a FastAPI + HTML/CSS/JS application that turns pantry
 
 1. detected ingredients (CLIP image model),
 2. a structured cooking recipe (Hugging Face inference with local fallback),
+3. translated recipe output for selected UI languages (English/Hindi/Tamil/Telugu/Kannada),
 3. optional voice narration (gTTS MP3),
 4. saved recipe history for authenticated users.
 
@@ -14,6 +15,7 @@ Smart Cooking Assistant is a FastAPI + HTML/CSS/JS application that turns pantry
 - Multi-image ingredient detection with confidence scores.
 - Recipe generation using ingredient list + user preferences.
 - Automatic fallback recipe generation if Hugging Face is unavailable.
+- Automatic translation of recipe response for supported languages.
 - Text-to-speech output for generated recipes.
 - User authentication with JWT.
 - MySQL-backed storage for users, login history, recipes, images, and detected ingredients.
@@ -78,6 +80,7 @@ Dependencies are listed in `backend/requirements.txt`:
 - mysql-connector-python
 - bcrypt
 - python-jose
+- deep-translator
 
 ---
 
@@ -176,10 +179,6 @@ Base URL: `http://127.0.0.1:8000`
    - `multipart/form-data` with one or more `images` files.
    - Returns detected ingredient list and confidence.
 
-- `POST /generate-recipe`
-   - JSON body with ingredients + preferences.
-   - Returns structured recipe payload.
-
 - `POST /text-to-speech`
    - JSON body with recipe object.
    - Returns `audio_url` for generated narration.
@@ -188,6 +187,11 @@ Base URL: `http://127.0.0.1:8000`
 
 - `GET /me`
    - Returns authenticated user profile.
+
+- `POST /generate-recipe`
+   - JSON body with ingredients + preferences.
+   - Requires Bearer token.
+   - Returns structured recipe payload translated to selected request language.
 
 - `POST /save-recipe`
    - Saves recipe and nutrition data.
@@ -231,7 +235,8 @@ On successful login:
 3. Recipe service builds a structured prompt and calls the configured Hugging Face model.
    Current configured recipe model: `Qwen/Qwen2.5-7B-Instruct`.
 4. If model call fails or no token is configured, local fallback recipe logic is used.
-5. Response is normalized into consistent JSON:
+5. Recipe response is translated for supported languages (`hi`, `ta`, `te`, `kn`) and left as-is for `en`.
+6. Response is normalized into consistent JSON:
     - `recipe_name`
     - `input_ingredients`
     - `extra_ingredients`
@@ -276,6 +281,12 @@ Authorization: Bearer <token>
 ### Recipe still works without HF token
 
 This is expected. The app uses fallback recipe generation when remote inference is unavailable.
+
+### Translation not appearing in non-English language
+
+- Confirm request body includes `language` as one of: `hi`, `ta`, `te`, `kn`.
+- Confirm `deep-translator` is installed in the same virtual environment used by `uvicorn`.
+- Translation library requires internet access to fetch translated text.
 
 ### Audio or upload files are not in the repository folder
 

@@ -213,6 +213,7 @@ class RecipeGenerator:
             "servings": str(recipe.get("servings") or preferences.servings),
             "meal_type": preferences.meal_type,
             "nutrition": nutrition,
+            "generation_source": "model",
         }
 
     def _extract_ingredient_names(self, model_ingredients: Any, fallback: list[str]) -> list[str]:
@@ -541,6 +542,7 @@ class RecipeGenerator:
             "servings": str(preferences.servings),
             "meal_type": preferences.meal_type,
             "nutrition": self._normalize_nutrition({}, rows, preferences.servings),
+            "generation_source": "fallback",
         }
 
 
