@@ -1,135 +1,903 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Cooking Assistant</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+﻿<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Smart Cooking Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Outfit:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 </head>
-<body>
-  <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">🍳</div>
-        <div class="brand-copy">
-          <h1>Smart Cooking Assistant</h1>
-          <p>Image to ingredients to recipe to voice</p>
-        </div>
-      </div>
+<body class="bg-charcoal font-body text-white min-h-screen">
+<div class="flex min-h-screen flex-col lg:flex-row overflow-hidden">
+<aside class="order-2 lg:order-1 w-full lg:w-80 bg-charcoal border-r border-white/10 flex flex-col shrink-0 transition-all duration-300">
+<div class="p-8 border-b border-white/5 flex items-center justify-between">
+<span class="text-xs font-black uppercase tracking-widest text-genz-blue">Smart Cooking Assistant</span>
+<button class="text-white/40 hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[24px]">restaurant_menu</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto sidebar-scroll p-6 space-y-4">
+<div class="group cursor-pointer p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-genz-pink transition-all">
+<p class="text-sm font-bold text-genz-pink truncate">Upload multiple images</p>
+<p class="text-[11px] text-white/40 mt-1 font-medium">Image to ingredient detection</p>
+</div>
+<div class="group cursor-pointer p-4 rounded-2xl hover:bg-white/5 border border-transparent transition-all">
+<p class="text-sm font-bold text-white/70 truncate">Generate structured recipe</p>
+<p class="text-[11px] text-white/40 mt-1 font-medium">Measurements, steps, nutrition</p>
+</div>
+<div class="group cursor-pointer p-4 rounded-2xl hover:bg-white/5 border border-transparent transition-all">
+<p class="text-sm font-bold text-white/70 truncate">Create voice narration</p>
+<p class="text-[11px] text-white/40 mt-1 font-medium">MP3 output from recipe text</p>
+</div>
+</div>
+<div class="p-6">
+<button class="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-2xl bg-white text-charcoal text-sm font-black hover:bg-genz-blue transition-all neo-shadow" id="new-recipe-button">
+<span class="material-symbols-outlined !text-[20px]">add_circle</span>
+                NEW RECIPE
+            </button>
+</div>
+</aside>
+<div class="order-1 lg:order-2 flex-1 flex flex-col relative overflow-y-auto">
+<header class="flex items-center justify-between px-10 py-6 bg-charcoal/90 backdrop-blur-xl sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="size-10 bg-genz-pink rounded-xl flex items-center justify-center text-charcoal">
+<span class="material-symbols-outlined !text-[28px] font-bold">restaurant_menu</span>
+</div>
+<h2 class="text-2xl font-black font-display tracking-tight">SMART <span class="text-genz-pink">COOKING</span></h2>
+</div>
+<div class="relative" id="auth-header-container"></div>
+</header>
+<main class="flex-1 flex flex-col items-center px-6 py-12 max-w-6xl mx-auto w-full">
+<div class="flex flex-col items-center mb-10 space-y-4">
+<div class="bg-genz-blue/10 text-genz-blue px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-genz-blue/20">
+                    Image â†’ Ingredients â†’ Recipe â†’ Voice
+                </div>
+<h1 class="text-white font-display text-4xl md:text-6xl font-black text-center leading-[1.1]">
+                    Cook with US <span class="text-gradient"></span>.
+                </h1>
+</div>
 
-      <div class="sidebar-card panel">
-        <p class="header-subtitle" style="margin-top:0;">This interface keeps the bold neon-bento structure from the original concept, but makes it cleaner and more practical for the full workflow.</p>
-        <div class="history" style="margin-top:18px;">
-          <div class="history-item">
-            <strong>Pantry lunch bowl</strong>
-            <span>Generated recipe with rice, tomato, onion, and spices</span>
-          </div>
-          <div class="history-item">
-            <strong>High protein dinner</strong>
-            <span>Chicken, egg, and vegetable stir-fry</span>
-          </div>
-          <div class="history-item">
-            <strong>Cozy soup night</strong>
-            <span>Blended pantry ingredients into a warm meal</span>
-          </div>
-        </div>
-      </div>
-    </aside>
+<div class="w-full grid grid-cols-1 lg:grid-cols-5 gap-6">
+<section class="bento-card rounded-[2rem] p-6 lg:col-span-3">
+<h3 class="font-black text-xl mb-4">1) Upload Images + Set Preferences</h3>
 
-    <main class="main">
-      <div class="topbar">
-        <div>
-          <h2 class="header-title">Turn pantry photos into a <span>complete recipe</span>.</h2>
-          <p class="header-subtitle">Upload multiple images, detect ingredients with CLIP, generate a structured recipe with measurements, and create a narrated MP3 for playback.</p>
-        </div>
-        <div class="pill-row">
-          <span class="pill active">CLIP detection</span>
-          <span class="pill active">Mistral recipe generation</span>
-          <span class="pill active">gTTS voice</span>
-        </div>
-      </div>
+<div class="border-2 border-dashed border-white/20 rounded-3xl p-6 text-center">
+<p class="text-white/70 mb-4">Drop pantry photos or choose files</p>
+<input id="file-input" accept="image/*" class="hidden" multiple type="file"/>
+<div class="flex flex-wrap justify-center gap-2">
+<button class="bg-genz-blue text-charcoal px-5 py-3 rounded-2xl font-black text-sm" id="choose-files" type="button">Choose Images</button>
+<button class="bg-white/10 border border-white/20 text-white px-5 py-3 rounded-2xl font-black text-sm" id="clear-files" type="button">Clear</button>
+</div>
+<p class="text-xs text-white/40 mt-3">Supports multiple images</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5" id="preview-grid"></div>
+</div>
 
-      <section class="hero-grid">
-        <div class="panel upload-card">
-          <div class="upload-dropzone" id="dropzone">
-            <div>
-              <div style="font-size:3rem; margin-bottom:10px;">📸</div>
-              <h3 class="header-title" style="font-size:2rem; margin-bottom:8px;">Drop pantry photos here</h3>
-              <p class="header-subtitle" style="margin:0 auto;">You can upload multiple images. The app will combine the detected ingredients and build a recipe around them.</p>
-              <div style="margin-top:18px;">
-                <input id="file-input" type="file" accept="image/*" multiple hidden />
-                <label for="file-input" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:10px; cursor:pointer;">Choose images</label>
-              </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+<div>
+<label class="text-xs font-bold text-white/60 uppercase">Meal type</label>
+<select class="w-full mt-2 bg-charcoal-light border border-white/10 rounded-xl" id="meal-type">
+<option value="breakfast">Breakfast</option>
+<option selected="" value="lunch">Lunch</option>
+<option value="dinner">Dinner</option>
+<option value="snack">Snack</option>
+<option value="dessert">Dessert</option>
+</select>
+</div>
+<div>
+<label class="text-xs font-bold text-white/60 uppercase">Diet</label>
+<select class="w-full mt-2 bg-charcoal-light border border-white/10 rounded-xl" id="diet-type">
+<option selected="" value="veg">Veg</option>
+<option value="non-veg">Non-Veg</option>
+<option value="vegan">Vegan</option>
+</select>
+</div>
+<div>
+<label class="text-xs font-bold text-white/60 uppercase">Spice level</label>
+<select class="w-full mt-2 bg-charcoal-light border border-white/10 rounded-xl" id="spice-level">
+<option value="low">Low</option>
+<option selected="" value="medium">Medium</option>
+<option value="high">High</option>
+</select>
+</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+<div>
+<label class="text-xs font-bold text-white/60 uppercase">Age group</label>
+<select class="w-full mt-2 bg-charcoal-light border border-white/10 rounded-xl" id="age-group">
+<option value="kids">Kids</option>
+<option selected="" value="adults">Adults</option>
+<option value="elderly">Elderly</option>
+</select>
+</div>
+<div>
+<label class="text-xs font-bold text-white/60 uppercase">Language</label>
+<select class="w-full mt-2 bg-charcoal-light border border-white/10 rounded-xl" id="language">
+<option selected="" value="en">English</option>
+<option value="hi">Hindi</option>
+<option value="ta">Tamil</option>
+<option value="te">Telugu</option>
+<option value="kn">Kannada</option>
+</select>
+</div>
+<div>
+<label class="text-xs font-bold text-white/60 uppercase">Servings</label>
+<select class="w-full mt-2 bg-charcoal-light border border-white/10 rounded-xl" id="servings">
+<option value="1">1</option>
+<option selected="" value="2">2</option>
+<option value="4">4</option>
+<option value="custom">Custom</option>
+</select>
+</div>
+<div>
+<label class="text-xs font-bold text-white/60 uppercase">Custom servings</label>
+<input class="w-full mt-2 bg-charcoal-light border border-white/10 rounded-xl" id="custom-servings" min="1" placeholder="e.g. 3" type="number"/>
+</div>
+</div>
+
+<div class="mt-4">
+<label class="text-xs font-bold text-white/60 uppercase">Health goals</label>
+<div class="flex flex-wrap gap-3 mt-2 text-sm">
+<label class="goal-chip">
+<input class="health-goal" type="checkbox" value="weight loss"/>
+<span class="tick">âœ“</span><span class="goal-label">Weight Loss</span>
+</label>
+<label class="goal-chip">
+<input class="health-goal" type="checkbox" value="high protein"/>
+<span class="tick">âœ“</span><span class="goal-label">High Protein</span>
+</label>
+<label class="goal-chip">
+<input class="health-goal" type="checkbox" value="diabetic friendly"/>
+<span class="tick">âœ“</span><span class="goal-label">Diabetic Friendly</span>
+</label>
+<label class="goal-chip">
+<input class="health-goal" type="checkbox" value="low fat"/>
+<span class="tick">âœ“</span><span class="goal-label">Low Fat</span>
+</label>
+<label class="goal-chip">
+<input class="health-goal" type="checkbox" value="heart healthy"/>
+<span class="tick">âœ“</span><span class="goal-label">Heart Healthy</span>
+</label>
+</div>
+</div>
+
+<div class="mt-4 space-y-3">
+<label class="text-xs font-bold text-white/60 uppercase">Text/Voice input</label>
+<textarea class="w-full bg-charcoal-light border border-white/10 rounded-xl" id="user-text" placeholder="Type or speak: I have tomato and onion, suggest dinner"></textarea>
+<div class="flex gap-2">
+<button class="bg-genz-yellow text-charcoal px-4 py-2 rounded-xl font-black text-sm" id="voice-input" type="button">ðŸŽ¤ Voice Input</button>
+<span class="text-xs text-white/60 self-center" id="voice-status">Click voice input and speak.</span>
+</div>
+</div>
+
+<div class="flex flex-wrap gap-3 mt-6">
+<button class="bg-genz-blue text-charcoal px-5 py-3 rounded-2xl font-black text-sm" id="detect-button" type="button">Detect Ingredients</button>
+<button class="bg-genz-pink text-charcoal px-5 py-3 rounded-2xl font-black text-sm" id="generate-button" type="button">Generate Recipe</button>
+<button class="bg-genz-green text-charcoal px-5 py-3 rounded-2xl font-black text-sm" id="voice-button" type="button">Generate Voice</button>
+</div>
+
+<p class="text-sm text-white/60 mt-4" id="status">Ready for images.</p>
+</section>
+
+<section class="bento-card rounded-[2rem] p-6 lg:col-span-2 space-y-5">
+<div>
+<h3 class="font-black text-xl mb-3">2) Detected Ingredients</h3>
+<div class="flex flex-wrap gap-2" id="ingredient-list"></div>
+</div>
+
+<div>
+<h3 class="font-black text-xl mb-3">3) Recipe</h3>
+<div class="text-white/70 text-sm space-y-3" id="recipe-output">
+<p>Generated recipe will appear here.</p>
+</div>
+</div>
+
+<div>
+<h3 class="font-black text-xl mb-3">Nutrition</h3>
+<div class="grid grid-cols-2 gap-2" id="nutrition-output"></div>
+</div>
+
+<div>
+<h3 class="font-black text-xl mb-3">4) Voice</h3>
+<div id="audio-output"><p class="text-white/60 text-sm">Generate voice after recipe creation.</p></div>
+</div>
+</section>
+</style>
+
+<script>
+    const API_BASE = window.location.origin.includes(":8000")
+        ? window.location.origin
+        : "http://127.0.0.1:8000";
+
+    let AUTH_TOKEN = localStorage.getItem("sca_token");
+    let CURRENT_USER = (() => {
+        try {
+            return JSON.parse(localStorage.getItem("sca_user") || "{}");
+        } catch {
+            return {};
+        }
+    })();
+
+    const state = {
+        files: [],
+        detectedIngredients: [],
+        recipe: null,
+        audioUrl: null,
+        isDetecting: false,
+        isGeneratingRecipe: false,
+        isGeneratingVoice: false
+    };
+
+    const dom = {
+        fileInput: document.getElementById("file-input"),
+        chooseFiles: document.getElementById("choose-files"),
+        clearFiles: document.getElementById("clear-files"),
+        previewGrid: document.getElementById("preview-grid"),
+        detectButton: document.getElementById("detect-button"),
+        generateButton: document.getElementById("generate-button"),
+        voiceButton: document.getElementById("voice-button"),
+        ingredientList: document.getElementById("ingredient-list"),
+        recipeOutput: document.getElementById("recipe-output"),
+        nutritionOutput: document.getElementById("nutrition-output"),
+        audioOutput: document.getElementById("audio-output"),
+        status: document.getElementById("status"),
+        mealType: document.getElementById("meal-type"),
+        dietType: document.getElementById("diet-type"),
+        spiceLevel: document.getElementById("spice-level"),
+        ageGroup: document.getElementById("age-group"),
+        language: document.getElementById("language"),
+        servings: document.getElementById("servings"),
+        customServings: document.getElementById("custom-servings"),
+        userText: document.getElementById("user-text"),
+        voiceInput: document.getElementById("voice-input"),
+        voiceStatus: document.getElementById("voice-status")
+    };
+
+    function getHealthGoals() {
+        return Array.from(document.querySelectorAll(".health-goal:checked")).map((el) => el.value);
+    }
+
+    function getServings() {
+        if (dom.servings.value === "custom") {
+            const parsed = Number.parseInt(dom.customServings.value, 10);
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : 2;
+        }
+        return Number.parseInt(dom.servings.value, 10) || 2;
+    }
+
+    function setStatus(message) {
+        dom.status.textContent = message;
+    }
+
+    function getInitial(nameOrEmail) {
+        const text = String(nameOrEmail || "U").trim();
+        return text ? text[0].toUpperCase() : "U";
+    }
+
+    function renderHeaderAuth() {
+        const container = document.getElementById("auth-header-container");
+        if (!container) {
+            return;
+        }
+
+        if (!AUTH_TOKEN) {
+            container.innerHTML = `
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a class="auth-btn" href="frontend/login.html">Login</a>
+                    <a class="auth-btn auth-btn-primary" href="frontend/signup.html">Signup</a>
+                </div>
+            `;
+            return;
+        }
+
+        const displayName = CURRENT_USER.name || CURRENT_USER.email || "User";
+        container.innerHTML = `
+            <div class="flex items-center gap-3">
+                <span class="hidden sm:inline text-sm font-semibold text-white/75">${displayName}</span>
+                <button class="user-avatar" id="user-avatar-btn" type="button">${getInitial(displayName)}</button>
             </div>
-          </div>
-
-          <div class="preview-grid" id="preview-grid"></div>
-
-          <div class="controls-grid">
-            <div class="field">
-              <label for="meal-type">Meal type</label>
-              <select id="meal-type">
-                <option>breakfast</option>
-                <option selected>lunch</option>
-                <option>dinner</option>
-                <option>snack</option>
-              </select>
+            <div class="user-menu hidden" id="user-menu">
+                <a class="menu-item" href="frontend/profile.html">View Profile</a>
+                <a class="menu-item" href="frontend/my-recipes.html">My Recipes</a>
+                <a class="menu-item" href="frontend/settings.html">Settings</a>
+                <a class="menu-item" href="frontend/about.html">About Us</a>
+                <button class="menu-item" id="logout-btn" type="button">Logout</button>
             </div>
-            <div class="field">
-              <label for="diet-type">Diet</label>
-              <select id="diet-type">
-                <option>balanced</option>
-                <option>vegetarian</option>
-                <option>vegan</option>
-                <option>high protein</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="spice-level">Spice level</label>
-              <select id="spice-level">
-                <option>mild</option>
-                <option selected>medium</option>
-                <option>hot</option>
-              </select>
-            </div>
-          </div>
+        `;
 
-          <div class="upload-actions">
-            <button class="btn btn-primary" id="detect-button">Detect ingredients</button>
-            <button class="btn btn-secondary" id="generate-button">Generate recipe</button>
-            <button class="btn btn-accent" id="voice-button">Generate voice</button>
-          </div>
+        const menu = document.getElementById("user-menu");
+        const avatarBtn = document.getElementById("user-avatar-btn");
+        const logoutBtn = document.getElementById("logout-btn");
 
-          <p class="status" id="status">Ready for images.</p>
-        </div>
+        avatarBtn?.addEventListener("click", () => {
+            menu?.classList.toggle("hidden");
+        });
 
-        <div class="panel">
-          <div class="bento">
-            <div class="sidebar-card panel" style="padding:18px;">
-              <p class="status" style="margin-top:0;">Detected ingredients</p>
-              <div class="ingredient-row" id="ingredient-list"></div>
-            </div>
-            <div class="sidebar-card panel" style="padding:18px;">
-              <p class="status" style="margin-top:0;">Nutrition snapshot</p>
-              <div class="stats-grid" id="nutrition-output"></div>
-            </div>
-          </div>
+        document.addEventListener("click", (event) => {
+            if (!menu || !avatarBtn) {
+                return;
+            }
+            const target = event.target;
+            if (!(target instanceof Node)) {
+                return;
+            }
+            if (!menu.contains(target) && !avatarBtn.contains(target)) {
+                menu.classList.add("hidden");
+            }
+        });
 
-          <div class="recipe-card" id="recipe-output" style="margin-top:16px;">
-            <p class="status">Generated recipe will appear here.</p>
-          </div>
+        logoutBtn?.addEventListener("click", () => {
+            localStorage.removeItem("sca_token");
+            localStorage.removeItem("sca_user");
+            AUTH_TOKEN = null;
+            CURRENT_USER = {};
+            renderHeaderAuth();
+            window.location.href = "agile_ui_1.html";
+        });
+    }
 
-          <div class="audio-card" id="audio-output" style="margin-top:16px;">
-            <p class="status">Create voice narration after generating the recipe.</p>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+    function authHeaders(includeJson = false) {
+        const headers = {};
+        const token = localStorage.getItem("sca_token");
+        if (includeJson) {
+            headers["Content-Type"] = "application/json";
+        }
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        return headers;
+    }
 
-  <script src="app.js"></script>
+    function handleUnauthorized(actionName) {
+        setStatus(`Please login or signup first to ${actionName}.`);
+        const goToLogin = window.confirm(`Please login or signup first to ${actionName}.\n\nPress OK for Login or Cancel for Signup.`);
+        window.location.href = goToLogin ? "frontend/login.html" : "frontend/signup.html";
+    }
+
+    function ensureAuthenticated(actionName) {
+        const token = localStorage.getItem("sca_token");
+        if (!token) {
+            handleUnauthorized(actionName);
+            return false;
+        }
+        return true;
+    }
+
+    async function refreshCurrentUser() {
+        if (!AUTH_TOKEN) {
+            renderHeaderAuth();
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/me`, {
+                headers: authHeaders(false),
+            });
+            if (response.ok) {
+                const data = await response.json();
+                CURRENT_USER = data.user || CURRENT_USER;
+                localStorage.setItem("sca_user", JSON.stringify(CURRENT_USER));
+            }
+            if (response.status === 401) {
+                localStorage.removeItem("sca_token");
+                localStorage.removeItem("sca_user");
+                AUTH_TOKEN = null;
+                CURRENT_USER = {};
+            }
+        } catch {
+            // Keep existing local user data if /me is unavailable.
+        }
+
+        renderHeaderAuth();
+    }
+
+    function setButtonBusy(button, busy, busyLabel, normalLabel) {
+        if (!button) {
+            return;
+        }
+        button.disabled = busy;
+        button.classList.toggle("opacity-60", busy);
+        button.classList.toggle("cursor-not-allowed", busy);
+        button.textContent = busy ? busyLabel : normalLabel;
+    }
+
+    async function downscaleImageFile(file, maxDimension = 1024, quality = 0.82) {
+        if (!file || !file.type || !file.type.startsWith("image/")) {
+            return file;
+        }
+
+        let imageBitmap = null;
+        try {
+            imageBitmap = await createImageBitmap(file);
+            const originalWidth = imageBitmap.width;
+            const originalHeight = imageBitmap.height;
+            const longestSide = Math.max(originalWidth, originalHeight);
+            if (longestSide <= maxDimension) {
+                return file;
+            }
+
+            const scale = maxDimension / longestSide;
+            const targetWidth = Math.max(1, Math.round(originalWidth * scale));
+            const targetHeight = Math.max(1, Math.round(originalHeight * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            const context = canvas.getContext("2d", { alpha: false });
+            if (!context) {
+                return file;
+            }
+            context.drawImage(imageBitmap, 0, 0, targetWidth, targetHeight);
+
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+            if (!blob) {
+                return file;
+            }
+
+            const fileName = file.name.replace(/\.[^.]+$/, "") || "image";
+            return new File([blob], `${fileName}.jpg`, {
+                type: "image/jpeg",
+                lastModified: file.lastModified || Date.now(),
+            });
+        } catch {
+            return file;
+        } finally {
+            if (imageBitmap && typeof imageBitmap.close === "function") {
+                imageBitmap.close();
+            }
+        }
+    }
+
+    function renderPreviews() {
+        dom.previewGrid.innerHTML = "";
+        state.files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const tile = document.createElement("div");
+                tile.className = "preview-tile-container";
+                tile.innerHTML = `
+                    <div class="tile-wrapper">
+                        <img alt="${file.name}" class="w-full h-20 object-cover rounded-t-xl" src="${reader.result}">
+                        <button class="delete-btn" data-index="${index}" type="button">âœ•</button>
+                    </div>
+                    <p class="text-[10px] text-white/60 p-2 truncate">${file.name}</p>
+                `;
+                const deleteBtn = tile.querySelector(".delete-btn");
+                deleteBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    deleteImageByIndex(index);
+                });
+                dom.previewGrid.appendChild(tile);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function deleteImageByIndex(index) {
+        state.files = state.files.filter((_, i) => i !== index);
+        state.detectedIngredients = [];
+        state.recipe = null;
+        state.audioUrl = null;
+        renderPreviews();
+        renderIngredients();
+        renderRecipe();
+        renderAudio();
+        setStatus(`Image removed. ${state.files.length} image(s) remaining.`);
+    }
+
+    function renderIngredients() {
+        dom.ingredientList.innerHTML = "";
+        if (!state.detectedIngredients.length) {
+            dom.ingredientList.innerHTML = '<p class="text-sm text-white/50">No ingredients detected yet.</p>';
+            return;
+        }
+        state.detectedIngredients.forEach((item) => {
+            const chip = document.createElement("span");
+            chip.className = "px-3 py-1.5 rounded-full bg-genz-blue/15 border border-genz-blue/30 text-genz-blue text-xs font-bold";
+            chip.textContent = `${item.ingredient} ${Math.round(item.confidence * 100)}%`;
+            dom.ingredientList.appendChild(chip);
+        });
+    }
+
+    function renderRecipe() {
+        if (!state.recipe) {
+            dom.recipeOutput.innerHTML = '<p class="text-sm text-white/50">Generated recipe will appear here.</p>';
+            dom.nutritionOutput.innerHTML = "";
+            return;
+        }
+
+        const recipe = state.recipe;
+        const normalizeIngredient = (value) => String(value || "").trim().toLowerCase();
+        const measuredRows = (recipe.ingredients_with_measurements || []).map((item) => ({
+            ingredient: normalizeIngredient(item.ingredient),
+            measurement: String(item.measurement || "").trim(),
+        }));
+        const matchedIngredients = (recipe.matched_ingredients || [])
+            .map((item) => normalizeIngredient(item))
+            .filter(Boolean);
+        const missingSet = new Set((recipe.missing_ingredients || []).map((item) => normalizeIngredient(item)));
+
+        const ingredientsHtml = (recipe.ingredients_with_measurements || [])
+            .map((item) => `<li>${item.measurement} ${item.ingredient}</li>`)
+            .join("");
+        const matchedHtml = matchedIngredients.map((item) => `<li>✔ ${item}</li>`).join("");
+        const measuredMissingHtml = measuredRows
+            .filter((item) => missingSet.has(item.ingredient))
+            .map((item) => `<li>${item.ingredient} - ${item.measurement || "as needed"}</li>`)
+            .join("");
+        const fallbackExtraHtml = (recipe.extra_ingredients || []).map((item) => `<li>${item}</li>`).join("");
+        const extraHtml = measuredMissingHtml || fallbackExtraHtml;
+        const stepsHtml = (recipe.steps || []).map((step) => `<li>${step}</li>`).join("");
+        const source = recipe.generation_source || recipe.source || "unknown";
+        const sourceLabel = source.startsWith("dataset")
+            ? "Dataset Recipe"
+            : source === "model"
+                ? "AI Generated"
+                : source === "fallback"
+                    ? "Safe Fallback"
+                    : source;
+
+        dom.recipeOutput.innerHTML = `
+            <h4 class="text-lg font-black">${recipe.recipe_name || "Recipe"}</h4>
+            <p class="text-sm text-white/60">${recipe.cooking_time || "--"} â€¢ ${recipe.servings || "--"} servings â€¢ ${recipe.meal_type || "--"}</p>
+            <p class="text-xs mt-1 text-genz-teal font-bold">Source: ${sourceLabel}</p>
+            <h5 class="font-bold mt-3">Ingredients</h5>
+            <ul class="list-disc ml-5 space-y-1 text-sm">${ingredientsHtml}</ul>
+            <h5 class="font-bold mt-3">Matched Ingredients</h5>
+            <ul class="list-disc ml-5 space-y-1 text-sm">${matchedHtml || "<li>None</li>"}</ul>
+            <h5 class="font-bold mt-3">Extra Ingredients Needed</h5>
+            <ul class="list-disc ml-5 space-y-1 text-sm">${extraHtml || "<li>None - You already have everything needed.</li>"}</ul>
+            <h5 class="font-bold mt-3">Steps</h5>
+            <ol class="list-decimal ml-5 space-y-1 text-sm">${stepsHtml}</ol>
+        `;
+
+        const nutrition = recipe.nutrition || {};
+        dom.nutritionOutput.innerHTML = `
+            <div class="p-3 rounded-xl bg-white/5 border border-white/10"><p class="text-white/40 text-xs">Calories</p><p class="font-black">${nutrition.calories || "--"}</p></div>
+            <div class="p-3 rounded-xl bg-white/5 border border-white/10"><p class="text-white/40 text-xs">Protein</p><p class="font-black">${nutrition.protein || "--"}</p></div>
+            <div class="p-3 rounded-xl bg-white/5 border border-white/10"><p class="text-white/40 text-xs">Carbs</p><p class="font-black">${nutrition.carbs || "--"}</p></div>
+            <div class="p-3 rounded-xl bg-white/5 border border-white/10"><p class="text-white/40 text-xs">Fat</p><p class="font-black">${nutrition.fat || "--"}</p></div>
+        `;
+    }
+
+    function renderAudio() {
+        if (!state.audioUrl) {
+            dom.audioOutput.innerHTML = '<p class="text-sm text-white/50">Generate voice after recipe creation.</p>';
+            return;
+        }
+        dom.audioOutput.innerHTML = `<audio class="w-full" controls src="${state.audioUrl}"></audio>`;
+    }
+
+    function mergeFiles(fileList) {
+        const incoming = Array.from(fileList || []);
+        const seen = new Set(state.files.map((f) => `${f.name}:${f.size}:${f.lastModified}`));
+        for (const file of incoming) {
+            const key = `${file.name}:${file.size}:${f.lastModified}`;
+            if (!seen.has(key)) {
+                state.files.push(file);
+                seen.add(key);
+            }
+        }
+    }
+
+    function handleFiles(fileList) {
+        mergeFiles(fileList);
+        state.detectedIngredients = [];
+        state.recipe = null;
+        state.audioUrl = null;
+        renderPreviews();
+        renderIngredients();
+        renderRecipe();
+        renderAudio();
+        setStatus(`${state.files.length} image(s) selected in total.`);
+    }
+
+    function clearFiles() {
+        state.files = [];
+        state.detectedIngredients = [];
+        state.recipe = null;
+        state.audioUrl = null;
+        dom.fileInput.value = "";
+        renderPreviews();
+        renderIngredients();
+        renderRecipe();
+        renderAudio();
+        setStatus("Selection cleared.");
+    }
+
+    async function readErrorDetail(response, fallback) {
+        try {
+            const data = await response.json();
+            return data.detail || `${fallback} (HTTP ${response.status})`;
+        } catch {
+            return `${fallback} (HTTP ${response.status})`;
+        }
+    }
+
+    async function detectIngredients() {
+        if (state.isDetecting) {
+            return;
+        }
+        if (!state.files.length) {
+            setStatus("Please select at least one image.");
+            return;
+        }
+
+        state.isDetecting = true;
+        setButtonBusy(dom.detectButton, true, "Detecting...", "Detect Ingredients");
+        try {
+            const preparedFiles = [];
+            for (const file of state.files) {
+                preparedFiles.push(await downscaleImageFile(file));
+            }
+
+            const formData = new FormData();
+            preparedFiles.forEach((file) => formData.append("images", file, file.name));
+
+            setStatus("Detecting ingredients...");
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 90000);
+            let response;
+            try {
+                response = await fetch(`${API_BASE}/detect-ingredients`, {
+                    method: "POST",
+                    headers: authHeaders(false),
+                    body: formData,
+                    signal: controller.signal,
+                });
+            } catch (error) {
+                if (error instanceof DOMException && error.name === "AbortError") {
+                    throw new Error("Detection is taking too long. Please try with fewer images.");
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+            if (!response.ok) {
+                throw new Error(await readErrorDetail(response, "Ingredient detection failed."));
+            }
+
+            const data = await response.json();
+            state.detectedIngredients = data.ingredients || [];
+            renderIngredients();
+
+            const token = localStorage.getItem("sca_token");
+            if (token) {
+                const uploadJobs = preparedFiles.map((file) => {
+                    const imageForm = new FormData();
+                    imageForm.append("file", file, file.name);
+                    return fetch(`${API_BASE}/upload-image`, {
+                        method: "POST",
+                        headers: authHeaders(false),
+                        body: imageForm,
+                    });
+                });
+
+                Promise.allSettled(uploadJobs).catch(() => {});
+                fetch(`${API_BASE}/store-ingredients`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({
+                        ingredients: state.detectedIngredients.map((item) => item.ingredient),
+                    }),
+                }).catch(() => {});
+            }
+
+            const imageCount = Number(data.image_count || state.files.length || 0);
+            setStatus(`Detected ${state.detectedIngredients.length} ingredient(s) from ${imageCount} image(s).`);
+        } finally {
+            state.isDetecting = false;
+            setButtonBusy(dom.detectButton, false, "Detecting...", "Detect Ingredients");
+        }
+    }
+
+    async function generateRecipe() {
+        if (state.isGeneratingRecipe) {
+            return;
+        }
+        if (!ensureAuthenticated("generate a recipe")) {
+            return;
+        }
+
+        const payload = {
+            ingredients: state.detectedIngredients.map((item) => item.ingredient),
+            meal_type: dom.mealType.value,
+            diet: dom.dietType.value,
+            spice_level: dom.spiceLevel.value,
+            age_group: dom.ageGroup.value,
+            health_goals: getHealthGoals(),
+            servings: getServings(),
+            language: dom.language.value,
+            user_text: dom.userText.value.trim()
+        };
+
+        if (!payload.ingredients.length && !payload.user_text) {
+            setStatus("Upload images or provide text/voice input first.");
+            return;
+        }
+
+        state.isGeneratingRecipe = true;
+        setButtonBusy(dom.generateButton, true, "Generating...", "Generate Recipe");
+        try {
+            setStatus("Generating recipe...");
+            const response = await fetch(`${API_BASE}/generate-recipe`, {
+                method: "POST",
+                headers: authHeaders(true),
+                body: JSON.stringify(payload)
+            });
+            if (response.status === 401) {
+                localStorage.removeItem("sca_token");
+                localStorage.removeItem("sca_user");
+                AUTH_TOKEN = null;
+                CURRENT_USER = {};
+                renderHeaderAuth();
+                handleUnauthorized("generate a recipe");
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(await readErrorDetail(response, "Recipe generation failed."));
+            }
+            state.recipe = await response.json();
+            state.audioUrl = null;
+
+            try {
+                await fetch(`${API_BASE}/save-recipe`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({
+                        recipe_name: state.recipe.recipe_name || "Recipe",
+                        meal_type: payload.meal_type,
+                        diet_type: payload.diet,
+                        language: payload.language,
+                        recipe_json: state.recipe,
+                        nutrition: state.recipe.nutrition || {},
+                    }),
+                });
+            } catch {
+                // Keep UI responsive even if save fails.
+            }
+
+            renderRecipe();
+            renderAudio();
+            setStatus("Recipe generated.");
+        } finally {
+            state.isGeneratingRecipe = false;
+            setButtonBusy(dom.generateButton, false, "Generating...", "Generate Recipe");
+        }
+    }
+
+    async function generateVoice() {
+        if (state.isGeneratingVoice) {
+            return;
+        }
+        if (!state.recipe) {
+            setStatus("Generate a recipe first.");
+            return;
+        }
+
+        state.isGeneratingVoice = true;
+        setButtonBusy(dom.voiceButton, true, "Generating Voice...", "Generate Voice");
+        try {
+            setStatus("Generating voice...");
+            const response = await fetch(`${API_BASE}/text-to-speech`, {
+                method: "POST",
+                headers: authHeaders(true),
+                body: JSON.stringify({ recipe: state.recipe, language: dom.language.value })
+            });
+            if (!response.ok) {
+                throw new Error(await readErrorDetail(response, "Voice generation failed."));
+            }
+            const data = await response.json();
+            state.audioUrl = `${API_BASE}${data.audio_url}`;
+            renderAudio();
+            setStatus("Voice ready.");
+        } finally {
+            state.isGeneratingVoice = false;
+            setButtonBusy(dom.voiceButton, false, "Generating Voice...", "Generate Voice");
+        }
+    }
+
+    function resetAll() {
+        state.files = [];
+        state.detectedIngredients = [];
+        state.recipe = null;
+        state.audioUrl = null;
+        dom.fileInput.value = "";
+        dom.mealType.value = "lunch";
+        dom.dietType.value = "veg";
+        dom.spiceLevel.value = "medium";
+        dom.ageGroup.value = "adults";
+        dom.language.value = "en";
+        dom.servings.value = "2";
+        dom.customServings.value = "";
+        dom.userText.value = "";
+        document.querySelectorAll(".health-goal").forEach((checkbox) => {
+            checkbox.checked = false;
+        });
+        renderPreviews();
+        renderIngredients();
+        renderRecipe();
+        renderAudio();
+        setStatus("Recipe reset. Ready for new inputs.");
+    }
+
+    dom.chooseFiles.addEventListener("click", () => dom.fileInput.click());
+    dom.clearFiles.addEventListener("click", clearFiles);
+    dom.fileInput.addEventListener("change", (event) => handleFiles(event.target.files));
+
+    const newRecipeButton = document.getElementById("new-recipe-button");
+    if (newRecipeButton) {
+        newRecipeButton.addEventListener("click", resetAll);
+    }
+
+    dom.voiceInput.addEventListener("click", () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            dom.voiceStatus.textContent = "Speech input not supported in this browser.";
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = dom.language.value === "en" ? "en-US" : `${dom.language.value}-IN`;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        dom.voiceStatus.textContent = "Listening...";
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript || "";
+            dom.userText.value = transcript;
+            dom.voiceStatus.textContent = "Voice captured.";
+            setStatus("Voice input captured.");
+        };
+        recognition.onerror = () => {
+            dom.voiceStatus.textContent = "Could not capture voice. Please try again.";
+        };
+        recognition.start();
+    });
+
+    dom.detectButton.addEventListener("click", async () => {
+        try {
+            await detectIngredients();
+        } catch (error) {
+            setStatus(error.message);
+        }
+    });
+
+    dom.generateButton.addEventListener("click", async () => {
+        try {
+            if (state.files.length && !state.detectedIngredients.length) {
+                await detectIngredients();
+            }
+            await generateRecipe();
+        } catch (error) {
+            setStatus(error.message);
+        }
+    });
+
+    dom.voiceButton.addEventListener("click", async () => {
+        try {
+            await generateVoice();
+        } catch (error) {
+            setStatus(error.message);
+        }
+    });
+
+    document.querySelectorAll(".goal-chip .health-goal").forEach((checkbox) => {
+        const syncState = () => {
+            const chip = checkbox.closest(".goal-chip");
+            if (!chip) {
+                return;
+            }
+            chip.classList.toggle("goal-chip-active", checkbox.checked);
+        };
+        checkbox.addEventListener("change", syncState);
+        syncState();
+    });
+
+    refreshCurrentUser();
+</script>
+
 </body>
-</html>
+ </html>

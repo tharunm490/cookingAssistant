@@ -8,6 +8,18 @@ BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    value = raw.strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
 def _default_audio_dir() -> Path:
     configured = os.getenv("SCA_AUDIO_DIR")
     if configured:
@@ -48,6 +60,7 @@ class Settings:
     hf_token: str | None = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN")
     clip_model_name: str = "openai/clip-vit-base-patch32"
     recipe_model_name: str = "Qwen/Qwen2.5-7B-Instruct"
+    use_model: bool = _env_bool("USE_MODEL", False)
     audio_dir: Path = GENERATED_AUDIO_DIR
     audio_route: str = "/audio"
     max_detected_ingredients: int = 5

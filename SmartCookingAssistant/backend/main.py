@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -11,6 +13,7 @@ import shutil
 import bcrypt
 from jose import JWTError, jwt
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -56,17 +59,27 @@ tts_service = TTSService()
 
 
 _detector = None
+_detector_lock = threading.Lock()
 
 
 def _get_or_create_detector():
     global _detector
     if _detector is None:
-        _detector = get_detector()
+        with _detector_lock:
+            if _detector is None:
+                _detector = get_detector()
     return _detector
+
+
+@app.on_event("startup")
+def warm_detector() -> None:
+    # Warm the detector in the background so startup does not block reload/server bind.
+    threading.Thread(target=_get_or_create_detector, daemon=True).start()
 
 
 class RecipeRequest(BaseModel):
     ingredients: list[str] = Field(default_factory=list)
+    dish_name: str = ""
     meal_type: str = "dinner"
     diet: str = "veg"
     spice_level: str = "medium"
@@ -130,6 +143,49 @@ def _to_dict_row(row: Any) -> dict[str, Any]:
     if isinstance(row, dict):
         return row
     return {}
+
+
+def _normalize_health_goals(goals: list[str]) -> list[str]:
+    alias_map = {
+        "weight_loss": "weight loss",
+        "high_protein": "high protein",
+        "diabetic_friendly": "diabetic friendly",
+        "low_fat": "low fat",
+        "heart_healthy": "heart healthy",
+    }
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for goal in goals:
+        raw = str(goal).strip().lower().replace("-", "_").replace(" ", "_")
+        mapped = alias_map.get(raw, str(goal).strip().lower().replace("_", " "))
+        if mapped and mapped not in seen:
+            seen.add(mapped)
+            normalized.append(mapped)
+    return normalized
+
+
+def _infer_dish_name_from_text(text: str) -> str:
+    cleaned = (text or "").strip().lower()
+    if not cleaned:
+        return ""
+
+    patterns = [
+        r"(?:make|cook|prepare)\s+(?:a|an|the)?\s*([a-z\s-]{3,})",
+        r"(?:want|need)\s+(?:to\s+)?(?:make|cook|prepare)\s+(?:a|an|the)?\s*([a-z\s-]{3,})",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, cleaned)
+        if match:
+            extracted = match.group(1).strip(" .,!?")
+            extracted = re.split(r"\b(from|with|using|for|please|now|today)\b", extracted, maxsplit=1)[0].strip(" .,!?")
+            extracted = re.sub(r"\s+", " ", extracted)
+            return extracted
+
+    # Fallback for direct phrases like "spinach dosa" or "rava idli".
+    fallback = re.sub(r"[^a-z0-9\s-]", " ", cleaned)
+    fallback = re.sub(r"\s+", " ", fallback).strip(" .,!?")
+    return fallback
 
 
 def get_current_user(authorization: str | None = Header(default=None)) -> dict[str, Any]:
@@ -259,10 +315,8 @@ async def detect_ingredients(images: list[UploadFile] = File(...)) -> JSONRespon
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Invalid image file: {upload.filename}") from exc
 
-    detector = _get_or_create_detector()
-    detected = detector.detect_from_images(pil_images)
-    max_by_image_count = min(len(pil_images), settings.max_detected_ingredients)
-    detected = detected[:max_by_image_count]
+    detector = await run_in_threadpool(_get_or_create_detector)
+    detected = await run_in_threadpool(detector.detect_from_images, pil_images)
     return JSONResponse(
         {
             "ingredients": detected,
@@ -284,15 +338,19 @@ def generate_recipe(request: RecipeRequest, user: dict[str, Any] = Depends(get_c
     if not all_ingredients and not request.user_text.strip():
         raise HTTPException(status_code=400, detail="Provide ingredients from image/text/voice before generating recipe.")
 
+    normalized_health_goals = _normalize_health_goals(request.health_goals)
+    dish_name = request.dish_name.strip() or _infer_dish_name_from_text(request.user_text)
+
     preferences = RecipePreferences(
         meal_type=request.meal_type,
         diet=request.diet,
         spice_level=request.spice_level,
         age_group=request.age_group,
-        health_goals=request.health_goals,
+        health_goals=normalized_health_goals,
         servings=max(1, request.servings),
         language=request.language,
         user_text=request.user_text,
+        dish_name=dish_name,
     )
 
     # Keep the dependency explicit for route-level auth enforcement.

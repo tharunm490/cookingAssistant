@@ -117,6 +117,21 @@
             from { opacity: 0; transform: translateY(-6px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        .delete-btn {
+            @apply absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold opacity-0 hover:opacity-100 transition-all duration-200 cursor-pointer z-10;
+        }
+        .delete-btn:hover {
+            @apply scale-110;
+        }
+        .tile-wrapper {
+            @apply relative;
+        }
+        .tile-wrapper:hover .delete-btn {
+            @apply opacity-100;
+        }
+        .preview-tile-container {
+            @apply relative rounded-xl overflow-visible border border-white/10 bg-white/5;
+        }
     </style>
 </head>
 <body class="bg-charcoal font-body text-white min-h-screen">
@@ -143,7 +158,7 @@
 </div>
 </div>
 <div class="p-6">
-<button class="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-2xl bg-white text-charcoal text-sm font-black hover:bg-genz-blue transition-all neo-shadow">
+<button id="new-recipe-button" class="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-2xl bg-white text-charcoal text-sm font-black hover:bg-genz-blue transition-all neo-shadow">
 <span class="material-symbols-outlined !text-[20px]">add_circle</span>
                 NEW RECIPE
             </button>
@@ -155,7 +170,7 @@
 <div class="size-10 bg-genz-pink rounded-xl flex items-center justify-center text-charcoal">
 <span class="material-symbols-outlined !text-[28px] font-bold">restaurant_menu</span>
 </div>
-<h2 class="text-2xl font-black font-display tracking-tight">SMART <span class="text-genz-pink">COOKING</span></h2>
+<h2 class="text-2xl font-black font-display tracking-tight">SHADOW <span class="text-genz-pink">AI</span></h2>
 </div>
 <div class="relative" id="auth-header-container"></div>
 </header>
@@ -165,7 +180,7 @@
                     Image → Ingredients → Recipe → Voice
                 </div>
 <h1 class="text-white font-display text-4xl md:text-6xl font-black text-center leading-[1.1]">
-                    Cook with US <span class="text-gradient"></span>.
+                    Cook with Shadow AI <span class="text-gradient"></span>.
                 </h1>
 </div>
 
@@ -516,18 +531,89 @@
         button.textContent = busy ? busyLabel : normalLabel;
     }
 
+    async function downscaleImageFile(file, maxDimension = 1024, quality = 0.82) {
+        if (!file || !file.type || !file.type.startsWith("image/")) {
+            return file;
+        }
+
+        let imageBitmap = null;
+        try {
+            imageBitmap = await createImageBitmap(file);
+            const originalWidth = imageBitmap.width;
+            const originalHeight = imageBitmap.height;
+            const longestSide = Math.max(originalWidth, originalHeight);
+            if (longestSide <= maxDimension) {
+                return file;
+            }
+
+            const scale = maxDimension / longestSide;
+            const targetWidth = Math.max(1, Math.round(originalWidth * scale));
+            const targetHeight = Math.max(1, Math.round(originalHeight * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            const context = canvas.getContext("2d", { alpha: false });
+            if (!context) {
+                return file;
+            }
+            context.drawImage(imageBitmap, 0, 0, targetWidth, targetHeight);
+
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+            if (!blob) {
+                return file;
+            }
+
+            const fileName = file.name.replace(/\.[^.]+$/, "") || "image";
+            return new File([blob], `${fileName}.jpg`, {
+                type: "image/jpeg",
+                lastModified: file.lastModified || Date.now(),
+            });
+        } catch {
+            return file;
+        } finally {
+            if (imageBitmap && typeof imageBitmap.close === "function") {
+                imageBitmap.close();
+            }
+        }
+    }
+
     function renderPreviews() {
         dom.previewGrid.innerHTML = "";
-        state.files.forEach((file) => {
+        state.files.forEach((file, index) => {
             const reader = new FileReader();
             reader.onload = () => {
                 const tile = document.createElement("div");
-                tile.className = "rounded-xl overflow-hidden border border-white/10 bg-white/5";
-                tile.innerHTML = `<img alt="${file.name}" class="w-full h-20 object-cover" src="${reader.result}"><p class="text-[10px] text-white/60 p-2 truncate">${file.name}</p>`;
+                tile.className = "preview-tile-container";
+                tile.innerHTML = `
+                    <div class="tile-wrapper">
+                        <img alt="${file.name}" class="w-full h-20 object-cover rounded-t-xl" src="${reader.result}">
+                        <button class="delete-btn" data-index="${index}" type="button">✕</button>
+                    </div>
+                    <p class="text-[10px] text-white/60 p-2 truncate">${file.name}</p>
+                `;
+                const deleteBtn = tile.querySelector(".delete-btn");
+                deleteBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    deleteImageByIndex(index);
+                });
                 dom.previewGrid.appendChild(tile);
             };
             reader.readAsDataURL(file);
         });
+    }
+
+    function deleteImageByIndex(index) {
+        state.files = state.files.filter((_, i) => i !== index);
+        state.detectedIngredients = [];
+        state.recipe = null;
+        state.audioUrl = null;
+        renderPreviews();
+        renderIngredients();
+        renderRecipe();
+        renderAudio();
+        setStatus(`Image removed. ${state.files.length} image(s) remaining.`);
     }
 
     function renderIngredients() {
@@ -552,21 +638,51 @@
         }
 
         const recipe = state.recipe;
+        const normalizeIngredient = (value) => String(value || "").trim().toLowerCase();
+        const measuredRows = (recipe.ingredients_with_measurements || []).map((item) => ({
+            ingredient: normalizeIngredient(item.ingredient),
+            measurement: String(item.measurement || "").trim(),
+        }));
+        const matchedIngredients = (recipe.matched_ingredients || [])
+            .map((item) => normalizeIngredient(item))
+            .filter(Boolean);
+        const missingSet = new Set((recipe.missing_ingredients || []).map((item) => normalizeIngredient(item)));
+
         const ingredientsHtml = (recipe.ingredients_with_measurements || [])
             .map((item) => `<li>${item.measurement} ${item.ingredient}</li>`)
             .join("");
-        const extraHtml = (recipe.extra_ingredients || []).map((item) => `<li>${item}</li>`).join("");
+        const matchedHtml = matchedIngredients.map((item) => `<li>✔ ${item}</li>`).join("");
+        const measuredMissingHtml = measuredRows
+            .filter((item) => missingSet.has(item.ingredient))
+            .map((item) => `<li>${item.ingredient} - ${item.measurement || "as needed"}</li>`)
+            .join("");
+        const fallbackExtraHtml = (recipe.extra_ingredients || []).map((item) => `<li>${item}</li>`).join("");
+        const extraHtml = measuredMissingHtml || fallbackExtraHtml;
         const stepsHtml = (recipe.steps || []).map((step) => `<li>${step}</li>`).join("");
-        const source = recipe.generation_source || "unknown";
+        const source = recipe.generation_source || recipe.source || "unknown";
+        const sourceLabel = source.startsWith("dataset")
+            ? "Dataset Recipe"
+            : source === "model"
+                ? "AI Generated"
+                : source === "fallback"
+                    ? "Safe Fallback"
+                    : source;
+        const healthGoals = getHealthGoals();
+        const healthOptimizationHtml = healthGoals.length > 0 
+            ? `<div class="p-3 mt-3 rounded-xl bg-genz-green/15 border border-genz-green/30"><p class="text-xs text-genz-green font-bold">✓ Health Optimized For: ${healthGoals.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(", ")}</p></div>`
+            : "";
 
         dom.recipeOutput.innerHTML = `
             <h4 class="text-lg font-black">${recipe.recipe_name || "Recipe"}</h4>
             <p class="text-sm text-white/60">${recipe.cooking_time || "--"} • ${recipe.servings || "--"} servings • ${recipe.meal_type || "--"}</p>
-            <p class="text-xs mt-1 text-genz-teal font-bold">Source: ${source}</p>
+            <p class="text-xs mt-1 text-genz-teal font-bold">Source: ${sourceLabel}</p>
+            ${healthOptimizationHtml}
             <h5 class="font-bold mt-3">Ingredients</h5>
             <ul class="list-disc ml-5 space-y-1 text-sm">${ingredientsHtml}</ul>
-            <h5 class="font-bold mt-3">Extra ingredients added</h5>
-            <ul class="list-disc ml-5 space-y-1 text-sm">${extraHtml || "<li>None</li>"}</ul>
+            <h5 class="font-bold mt-3">Matched Ingredients</h5>
+            <ul class="list-disc ml-5 space-y-1 text-sm">${matchedHtml || "<li>None</li>"}</ul>
+            <h5 class="font-bold mt-3">Extra Ingredients Needed</h5>
+            <ul class="list-disc ml-5 space-y-1 text-sm">${extraHtml || "<li>None - You already have everything needed.</li>"}</ul>
             <h5 class="font-bold mt-3">Steps</h5>
             <ol class="list-decimal ml-5 space-y-1 text-sm">${stepsHtml}</ol>
         `;
@@ -646,31 +762,34 @@
         state.isDetecting = true;
         setButtonBusy(dom.detectButton, true, "Detecting...", "Detect Ingredients");
         try {
-            const formData = new FormData();
-            state.files.forEach((file) => formData.append("images", file));
-
-            // Store uploaded image paths for audit/history before detection.
+            const preparedFiles = [];
             for (const file of state.files) {
-                const imageForm = new FormData();
-                imageForm.append("file", file);
-                try {
-                    await fetch(`${API_BASE}/upload-image`, {
-                        method: "POST",
-                        headers: authHeaders(false),
-                        body: imageForm,
-                    });
-                } catch {
-                    // Do not block ingredient detection if image history insert fails.
-                }
+                preparedFiles.push(await downscaleImageFile(file));
             }
+
+            const formData = new FormData();
+            preparedFiles.forEach((file) => formData.append("images", file, file.name));
 
             setStatus("Detecting ingredients...");
 
-            const response = await fetch(`${API_BASE}/detect-ingredients`, {
-                method: "POST",
-                headers: authHeaders(false),
-                body: formData,
-            });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 90000);
+            let response;
+            try {
+                response = await fetch(`${API_BASE}/detect-ingredients`, {
+                    method: "POST",
+                    headers: authHeaders(false),
+                    body: formData,
+                    signal: controller.signal,
+                });
+            } catch (error) {
+                if (error instanceof DOMException && error.name === "AbortError") {
+                    throw new Error("Detection is taking too long. Please try with fewer images.");
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
             if (!response.ok) {
                 throw new Error(await readErrorDetail(response, "Ingredient detection failed."));
             }
@@ -679,16 +798,26 @@
             state.detectedIngredients = data.ingredients || [];
             renderIngredients();
 
-            try {
-                await fetch(`${API_BASE}/store-ingredients`, {
+            const token = localStorage.getItem("sca_token");
+            if (token) {
+                const uploadJobs = preparedFiles.map((file) => {
+                    const imageForm = new FormData();
+                    imageForm.append("file", file, file.name);
+                    return fetch(`${API_BASE}/upload-image`, {
+                        method: "POST",
+                        headers: authHeaders(false),
+                        body: imageForm,
+                    });
+                });
+
+                Promise.allSettled(uploadJobs).catch(() => {});
+                fetch(`${API_BASE}/store-ingredients`, {
                     method: "POST",
                     headers: authHeaders(true),
                     body: JSON.stringify({
                         ingredients: state.detectedIngredients.map((item) => item.ingredient),
                     }),
-                });
-            } catch {
-                // Detection should still succeed even if history persistence fails.
+                }).catch(() => {});
             }
 
             const imageCount = Number(data.image_count || state.files.length || 0);
@@ -805,9 +934,54 @@
         }
     }
 
+    function resetAll() {
+        // Clear all state
+        state.files = [];
+        state.detectedIngredients = [];
+        state.recipe = null;
+        state.audioUrl = null;
+        dom.fileInput.value = "";
+
+        // Reset form inputs to defaults
+        dom.mealType.value = "lunch";
+        dom.dietType.value = "veg";
+        dom.spiceLevel.value = "medium";
+        dom.ageGroup.value = "adults";
+        dom.language.value = "en";
+        dom.servings.value = "2";
+        dom.customServings.value = "";
+        dom.userText.value = "";
+
+        // Uncheck all health goals
+        document.querySelectorAll(".health-goal").forEach((checkbox) => {
+            checkbox.checked = false;
+        });
+
+        // Update UI
+        renderPreviews();
+        renderIngredients();
+        renderRecipe();
+        renderAudio();
+        setStatus("Fresh start! Ready for new ingredients.");
+
+        // Re-sync health goal styling
+        document.querySelectorAll(".goal-chip .health-goal").forEach((checkbox) => {
+            const chip = checkbox.closest(".goal-chip");
+            if (chip) {
+                chip.classList.toggle("goal-chip-active", checkbox.checked);
+            }
+        });
+    }
+
     dom.chooseFiles.addEventListener("click", () => dom.fileInput.click());
     dom.clearFiles.addEventListener("click", clearFiles);
     dom.fileInput.addEventListener("change", (event) => handleFiles(event.target.files));
+
+    // Connect New Recipe button to reset function
+    const newRecipeBtn = document.getElementById("new-recipe-button");
+    if (newRecipeBtn) {
+        newRecipeBtn.addEventListener("click", resetAll);
+    }
 
     dom.voiceInput.addEventListener("click", () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
