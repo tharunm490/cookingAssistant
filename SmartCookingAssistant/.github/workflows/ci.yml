@@ -1,0 +1,167 @@
+name: Smart Cooking Assistant CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - "Agile_version02"
+
+jobs:
+  backend-unit-tests:
+    name: Backend Unit, AI, Security, Performance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r backend/requirements-dev.txt
+
+      - name: Run backend tests
+        env:
+          PYTHONPATH: .
+        run: |
+          mkdir -p reports
+          pytest backend/tests \
+            -m "unit or ai or security or performance" \
+            --html=reports/backend-tests.html \
+            --self-contained-html
+
+      - name: Upload backend report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-report
+          path: reports/backend-tests.html
+
+  api-tests:
+    name: FastAPI API Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r backend/requirements-dev.txt
+
+      - name: Run API tests
+        env:
+          PYTHONPATH: .
+        run: |
+          mkdir -p reports
+          pytest backend/tests/api \
+            -m "api" \
+            --html=reports/api-tests.html \
+            --self-contained-html
+
+      - name: Upload API report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-report
+          path: reports/api-tests.html
+
+  db-integration-tests:
+    name: DB and Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: smart_cooking_assistant_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -prootpass"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r backend/requirements-dev.txt
+
+      - name: Run DB and integration tests
+        env:
+          PYTHONPATH: .
+          RUN_DB_TESTS: "1"
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: rootpass
+          DB_NAME: smart_cooking_assistant_test
+        run: |
+          mkdir -p reports
+          pytest backend/tests/integration \
+            -m "db or integration" \
+            --html=reports/db-integration-tests.html \
+            --self-contained-html
+
+      - name: Upload DB/Integration report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-integration-test-report
+          path: reports/db-integration-tests.html
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install frontend test dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: |
+          mkdir -p ../reports
+          npm test -- --json --outputFile=../reports/frontend-tests.json
+
+      - name: Upload frontend reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-report
+          path: |
+            reports/frontend-tests.json
+            frontend/coverage
